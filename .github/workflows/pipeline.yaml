@@ -33,3 +33,4 @@ jobs:
           heroku_app_name: "fullstack-pokedex-app"
           heroku_email: "leevi.parkkinen@aalto.fi"
           healthcheck: "https://fullstack-pokedex-app.herokuapp.com/health"
+          rollbackonhealthcheckfailed: true
