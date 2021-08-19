@@ -33,7 +33,8 @@ jobs:
           start: npm run start-prod
           wait-on: http://localhost:5000
 
-      - uses: akhileshns/heroku-deploy@v3.12.12
+      - name: deploy to heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
         if: ${{ github.event_name == 'push' }}
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
@@ -41,6 +42,7 @@ jobs:
           heroku_email: "leevi.parkkinen@aalto.fi"
           healthcheck: "https://fullstack-pokedex-app.herokuapp.com/health"
           rollbackonhealthcheckfailed: true
+
 
       - uses: actions/checkout@v2
       - name: Bump version and push tag
@@ -50,22 +52,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
 
-      - uses: 8398a7/action-slack@v3
+      - name: slack notification on succesful deploy 
+        uses: 8398a7/action-slack@v3
         with:
           status: custom
-          fields: workflow,job,commit,repo,ref,author,took
+          fields: workflow,job,commit,author,took
           custom_payload: |
             {
               attachments: [{
                 color: 'good',
-                text: `${process.env.AS_WORKFLOW}\n${process.env.AS_JOB} (${process.env.AS_COMMIT}) of ${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+                text: `${process.env.AS_WORKFLOW}\n${process.env.AS_JOB} (${process.env.AS_COMMIT})\ndeployed a new version to https://fullstack-pokedex-app.herokuapp.com/ by ${process.env.AS_AUTHOR} in ${process.env.AS_TOOK}`,
               }]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: success()
+        if: ${{ success() && github.event_name == 'push' }}
 
-      - uses: 8398a7/action-slack@v3
+      - name: slack notification on failure 
+        uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
