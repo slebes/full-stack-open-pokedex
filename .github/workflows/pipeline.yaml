@@ -34,6 +34,7 @@ jobs:
           wait-on: http://localhost:5000
 
       - name: deploy to heroku
+        id: deploy
         uses: akhileshns/heroku-deploy@v3.12.12
         if: ${{ github.event_name == 'push' }}
         with:
@@ -66,7 +67,7 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: ${{ success() && github.event_name == 'push' }}
+        if: ${{ steps.deploy.outcome == 'succes' }}
 
       - name: slack notification on failure 
         uses: 8398a7/action-slack@v3
