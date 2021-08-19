@@ -44,6 +44,7 @@ jobs:
           healthcheck: "https://fullstack-pokedex-app.herokuapp.com/health"
           rollbackonhealthcheckfailed: true
 
+      - run: echo ${{ steps.deploy.outcome }}
 
       - uses: actions/checkout@v2
       - name: Bump version and push tag
