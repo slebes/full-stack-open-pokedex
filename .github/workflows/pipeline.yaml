@@ -25,13 +25,16 @@ jobs:
         run: npm run build
       - name: test
         run: npm run test
+
       - name: e2e tests
         uses: cypress-io/github-action@v2
         with:
           command: npm run test:e2e
           start: npm run start-prod
           wait-on: http://localhost:5000
-      - uses: akhileshns/heroku-deploy@v3.12.12
+
+      - name: deploy to heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
         if: ${{ github.event_name == 'push' }}
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
@@ -39,11 +42,37 @@ jobs:
           heroku_email: "leevi.parkkinen@aalto.fi"
           healthcheck: "https://fullstack-pokedex-app.herokuapp.com/health"
           rollbackonhealthcheckfailed: true
-      - uses: actions/checkout@v2    
+
+
+      - uses: actions/checkout@v2
       - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.33.0
+        uses: anothrNick/github-tag-action@eca2b69f9e2c24be7decccd0f15fdb1ea5906598
         if: ${{ github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message)), '#skip') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
-        
+
+      - name: slack notification on succesful deploy 
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: workflow,job,commit,author,took
+          custom_payload: |
+            {
+              attachments: [{
+                color: 'good',
+                text: `${process.env.AS_WORKFLOW}\n${process.env.AS_JOB} (${process.env.AS_COMMIT})\ndeployed a new version to https://fullstack-pokedex-app.herokuapp.com/ by ${process.env.AS_AUTHOR} in ${process.env.AS_TOOK}`,
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: ${{ success() && github.event_name == 'push' }}
+
+      - name: slack notification on failure 
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: failure()
