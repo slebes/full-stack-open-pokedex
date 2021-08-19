@@ -68,7 +68,7 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: ${{ steps.deploy.outcome == 'succes' }}
+        if: ${{ steps.deploy.outcome == 'success' }}
 
       - name: slack notification on failure 
         uses: 8398a7/action-slack@v3
